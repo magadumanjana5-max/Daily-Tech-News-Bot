@@ -1,0 +1,733 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f2f3ef">
+  <title>API Workbench | Daily Tech News</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #202522;
+      --muted: #69736d;
+      --line: #d9ded8;
+      --paper: #fbfcf9;
+      --canvas: #f0f2ed;
+      --green: #28614d;
+      --green-dark: #1e4739;
+      --mint: #dcebe2;
+      --blue: #426c8b;
+      --red: #a53e3b;
+      --amber: #9a6a19;
+      --mono: "Cascadia Code", "SFMono-Regular", Consolas, monospace;
+      --sans: "Aptos", "Segoe UI Variable", "Segoe UI", sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-width: 320px;
+      background:
+        linear-gradient(90deg, transparent 0 49.9%, rgba(32, 37, 34, .025) 50%, transparent 50.1%),
+        var(--canvas);
+      color: var(--ink);
+      font-family: var(--sans);
+      font-size: 14px;
+    }
+
+    button, input { font: inherit; }
+
+    .topbar {
+      min-height: 64px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+      padding: 0 30px;
+      background: var(--paper);
+      border-bottom: 1px solid var(--line);
+    }
+
+    .brand { display: flex; align-items: center; gap: 12px; }
+    .brand-mark {
+      display: grid;
+      place-items: center;
+      width: 32px;
+      aspect-ratio: 1;
+      color: white;
+      background: var(--green);
+      border-radius: 7px;
+      font-size: 15px;
+      font-weight: 700;
+    }
+    .brand-name { font-size: 14px; font-weight: 700; }
+    .brand-subtitle { margin-top: 2px; color: var(--muted); font-size: 12px; }
+    .origin { color: var(--muted); font: 12px var(--mono); overflow-wrap: anywhere; text-align: right; }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 246px minmax(0, 1fr);
+      max-width: 1440px;
+      min-height: calc(100vh - 64px);
+      margin: 0 auto;
+    }
+
+    .sidebar {
+      padding: 28px 16px;
+      background: #e9ece6;
+      border-right: 1px solid var(--line);
+    }
+    .section-label {
+      margin: 0 10px 12px;
+      color: var(--muted);
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+    }
+    .route-list { display: grid; gap: 4px; }
+    .route-button {
+      display: grid;
+      grid-template-columns: 38px minmax(0, 1fr);
+      align-items: center;
+      width: 100%;
+      min-height: 44px;
+      padding: 5px 9px;
+      border: 1px solid transparent;
+      border-radius: 5px;
+      background: transparent;
+      color: var(--ink);
+      cursor: pointer;
+      text-align: left;
+    }
+    .route-button:hover { background: rgba(255, 255, 255, .58); }
+    .route-button[aria-current="page"] {
+      background: var(--paper);
+      border-color: var(--line);
+      box-shadow: 0 1px 2px rgba(20, 35, 27, .05);
+    }
+    .method {
+      color: var(--green);
+      font: 700 9px var(--mono);
+      letter-spacing: .025em;
+    }
+    .route-name { font-size: 12px; font-weight: 600; }
+    .sidebar-note {
+      margin: 30px 10px 0;
+      padding-top: 15px;
+      border-top: 1px solid #d4dad2;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.55;
+    }
+
+    main { min-width: 0; padding: 34px clamp(20px, 4vw, 58px) 54px; }
+    .eyebrow {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--green);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+    .eyebrow::before { width: 7px; height: 7px; border-radius: 50%; background: #70a582; content: ""; }
+    h1 { margin: 10px 0 5px; font-size: clamp(24px, 3vw, 32px); line-height: 1.15; }
+    .intro { margin: 0; color: var(--muted); font-size: 13px; }
+
+    .schedule-panel { margin-top: 24px; }
+    .schedule-body {
+      display: grid;
+      grid-template-columns: minmax(190px, 270px) minmax(0, 1fr);
+      align-items: center;
+      gap: 18px 28px;
+      padding: 18px;
+    }
+    .schedule-field { display: grid; gap: 7px; }
+    .schedule-field label { color: #424b45; font-size: 12px; font-weight: 650; }
+    .schedule-field select {
+      width: 100%;
+      min-height: 39px;
+      padding: 7px 34px 7px 10px;
+      border: 1px solid #cbd2cb;
+      border-radius: 4px;
+      background: white;
+      color: var(--ink);
+      font: inherit;
+    }
+    .schedule-field select:focus { border-color: var(--green); outline: 3px solid rgba(40, 97, 77, .12); }
+    .schedule-summary { display: grid; gap: 7px; min-width: 0; }
+    .schedule-state { display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 650; }
+    .schedule-state.error { color: var(--red); }
+    .live-dot { width: 8px; aspect-ratio: 1; flex: none; border-radius: 50%; background: #73a982; }
+    .schedule-state.running .live-dot { background: #c1872b; animation: pulse 1.2s ease-in-out infinite; }
+    .schedule-state.error .live-dot { background: var(--red); }
+    @keyframes pulse { 50% { opacity: .35; } }
+    .schedule-detail { color: var(--muted); font-size: 11px; line-height: 1.5; overflow-wrap: anywhere; }
+
+    .news-section { margin-top: 30px; }
+    .news-heading { display: flex; align-items: end; justify-content: space-between; gap: 12px; margin-bottom: 10px; }
+    .news-heading h2 { margin: 0; font-size: 17px; }
+    .news-heading span { color: var(--muted); font-size: 11px; }
+    .news-list { border-top: 1px solid var(--line); background: rgba(251, 252, 249, .6); }
+    .news-item { display: grid; grid-template-columns: 82px minmax(0, 1fr); gap: 13px; padding: 16px 14px; border-bottom: 1px solid var(--line); }
+    .news-category { color: var(--green); font-size: 10px; font-weight: 700; text-transform: uppercase; overflow-wrap: anywhere; }
+    .news-title { margin: 0; font-size: 14px; line-height: 1.4; }
+    .news-title a { color: var(--ink); text-decoration: none; }
+    .news-title a:hover { color: var(--green); text-decoration: underline; }
+    .news-description { margin: 6px 0 8px; color: #566159; font-size: 12px; line-height: 1.5; }
+    .news-meta { display: flex; flex-wrap: wrap; gap: 5px 12px; color: var(--muted); font-size: 10px; }
+    .feed-message { padding: 22px 14px; color: var(--muted); font-size: 12px; }
+
+    .workbench {
+      display: grid;
+      grid-template-columns: minmax(280px, .78fr) minmax(360px, 1.22fr);
+      gap: 22px;
+      margin-top: 30px;
+      align-items: start;
+    }
+    .panel {
+      min-width: 0;
+      background: var(--paper);
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      box-shadow: 0 2px 6px rgba(28, 40, 32, .035);
+    }
+    .panel-heading {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      min-height: 51px;
+      padding: 0 17px;
+      border-bottom: 1px solid var(--line);
+    }
+    .panel-heading h2 { margin: 0; font-size: 13px; font-weight: 700; }
+    .panel-index { color: #879089; font: 11px var(--mono); }
+    .request-body { padding: 18px 17px 17px; }
+    .selected-route {
+      margin-bottom: 19px;
+      padding: 12px;
+      border: 1px solid #d9e4dc;
+      border-radius: 4px;
+      background: #f2f7f3;
+    }
+    .selected-title { margin-bottom: 6px; color: var(--muted); font-size: 11px; }
+    .selected-path { color: var(--green-dark); font: 12px/1.5 var(--mono); overflow-wrap: anywhere; }
+    .field-grid { display: grid; gap: 14px; }
+    .field { display: grid; gap: 6px; }
+    .field label { color: #424b45; font-size: 12px; font-weight: 650; }
+    .field input {
+      width: 100%;
+      min-height: 39px;
+      padding: 8px 10px;
+      border: 1px solid #cbd2cb;
+      border-radius: 4px;
+      background: white;
+      color: var(--ink);
+      outline: none;
+    }
+    .field input:focus { border-color: var(--green); box-shadow: 0 0 0 3px rgba(40, 97, 77, .12); }
+    .field input::placeholder { color: #9aa29c; }
+    .field-hint { color: var(--muted); font-size: 11px; }
+    .actions { display: flex; gap: 8px; margin-top: 21px; }
+    .send-button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      min-height: 39px;
+      padding: 0 14px;
+      border: 1px solid var(--green-dark);
+      border-radius: 4px;
+      background: var(--green);
+      color: white;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 700;
+    }
+    .send-button:hover { background: var(--green-dark); }
+    .send-button:disabled { opacity: .65; cursor: wait; }
+    .reset-button {
+      min-height: 39px;
+      padding: 0 12px;
+      border: 1px solid var(--line);
+      border-radius: 4px;
+      background: white;
+      color: #515b54;
+      cursor: pointer;
+      font-size: 12px;
+    }
+    .reset-button:hover { background: #f1f4f0; }
+
+    .response-panel { overflow: hidden; }
+    .response-heading { min-height: 51px; }
+    .response-meta { display: flex; align-items: center; gap: 8px; color: var(--muted); font: 11px var(--mono); }
+    .status {
+      display: inline-flex;
+      align-items: center;
+      min-height: 22px;
+      padding: 0 8px;
+      border: 1px solid #dce1dc;
+      border-radius: 3px;
+      background: #f3f5f2;
+      color: #69736d;
+      font: 700 10px var(--mono);
+    }
+    .status.good { border-color: #b8d6c2; background: #e9f4ec; color: #276044; }
+    .status.bad { border-color: #e5c2bf; background: #f9eeed; color: var(--red); }
+    .status.warn { border-color: #e7d5b1; background: #fbf4e5; color: var(--amber); }
+    .response-tools { display: flex; align-items: center; gap: 7px; }
+    .copy-button {
+      width: 28px;
+      height: 28px;
+      border: 1px solid transparent;
+      border-radius: 4px;
+      background: transparent;
+      color: var(--muted);
+      cursor: pointer;
+      font-size: 15px;
+    }
+    .copy-button:hover { border-color: var(--line); background: white; color: var(--ink); }
+    .request-url {
+      min-height: 37px;
+      padding: 10px 14px;
+      border-bottom: 1px solid #e6e9e5;
+      background: #f8f9f6;
+      color: var(--blue);
+      font: 11px/1.5 var(--mono);
+      overflow-wrap: anywhere;
+    }
+    .response-content { min-height: 330px; max-height: 560px; overflow: auto; padding: 15px; }
+    .response-content pre {
+      margin: 0;
+      color: #323c35;
+      font: 12px/1.65 var(--mono);
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+    }
+    .empty-state {
+      display: grid;
+      min-height: 298px;
+      place-content: center;
+      justify-items: center;
+      color: #89928b;
+      text-align: center;
+    }
+    .empty-mark {
+      display: grid;
+      place-items: center;
+      width: 42px;
+      aspect-ratio: 1;
+      margin-bottom: 12px;
+      border: 1px solid #dce2dc;
+      border-radius: 50%;
+      background: #f5f7f3;
+      color: var(--green);
+      font: 16px var(--mono);
+    }
+    .empty-state strong { color: #525d55; font-size: 12px; }
+    .empty-state span { margin-top: 5px; font-size: 11px; }
+    .response-summary { padding: 10px 15px; border-top: 1px solid #e6e9e5; color: var(--muted); font-size: 11px; }
+
+    @media (max-width: 900px) {
+      .layout { grid-template-columns: 210px minmax(0, 1fr); }
+      .workbench { grid-template-columns: 1fr; }
+      .response-content { min-height: 250px; }
+      .schedule-body { grid-template-columns: 1fr; gap: 14px; }
+    }
+    @media (max-width: 620px) {
+      .topbar { min-height: 58px; padding: 0 15px; }
+      .origin { max-width: 43%; font-size: 10px; }
+      .layout { display: block; }
+      .sidebar { padding: 12px 14px; border-right: 0; border-bottom: 1px solid var(--line); }
+      .sidebar .section-label, .sidebar-note { display: none; }
+      .route-list { display: flex; gap: 5px; overflow-x: auto; padding-bottom: 2px; }
+      .route-button { display: flex; flex: 0 0 auto; gap: 7px; width: auto; min-height: 36px; padding: 0 9px; }
+      main { padding: 25px 15px 35px; }
+      .workbench { gap: 14px; margin-top: 22px; }
+      .response-meta { gap: 5px; font-size: 10px; }
+      .news-section { margin-top: 23px; }
+      .news-item { grid-template-columns: 1fr; gap: 6px; padding: 14px 10px; }
+    }
+    @media (prefers-reduced-motion: no-preference) {
+      main { animation: appear .28s ease-out both; }
+      @keyframes appear { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-mark" aria-hidden="true">N</div>
+      <div>
+        <div class="brand-name">Daily Tech News</div>
+        <div class="brand-subtitle">API workbench</div>
+      </div>
+    </div>
+    <div class="origin" id="origin"></div>
+  </header>
+
+  <div class="layout">
+    <aside class="sidebar" aria-label="API endpoints">
+      <p class="section-label">GET endpoints</p>
+      <nav class="route-list" id="route-list"></nav>
+      <p class="sidebar-note">Choose an endpoint, set its parameters, and send a request to the local API.</p>
+    </aside>
+
+    <main>
+      <div class="eyebrow">Local development</div>
+      <h1>Daily Tech News</h1>
+      <p class="intro">Scheduled collection and live API testing.</p>
+
+      <section class="panel schedule-panel" aria-labelledby="schedule-heading">
+        <div class="panel-heading">
+          <h2 id="schedule-heading">Refresh schedule</h2>
+          <span class="panel-index">AUTOMATIC</span>
+        </div>
+        <div class="schedule-body">
+          <div class="schedule-field">
+            <label for="schedule-select">Fetch news</label>
+            <select id="schedule-select" aria-describedby="schedule-detail">
+              <option value="1m">Every minute</option>
+              <option value="5m">Every 5 minutes</option>
+              <option value="1h">Every hour</option>
+              <option value="1d">Every day</option>
+            </select>
+          </div>
+          <div class="schedule-summary">
+            <div class="schedule-state" id="schedule-state" aria-live="polite"><span class="live-dot"></span><span id="schedule-state-text">Loading schedule...</span></div>
+            <div class="schedule-detail" id="schedule-detail">Loading saved schedule and latest refresh status.</div>
+          </div>
+        </div>
+      </section>
+
+      <section class="news-section" aria-labelledby="news-heading">
+        <div class="news-heading">
+          <h2 id="news-heading">Latest news</h2>
+          <span id="news-updated">Loading...</span>
+        </div>
+        <div class="news-list" id="news-list" aria-live="polite"><div class="feed-message">Loading saved stories...</div></div>
+      </section>
+
+      <div class="workbench">
+        <section class="panel" aria-labelledby="request-heading">
+          <div class="panel-heading">
+            <h2 id="request-heading">Request</h2>
+            <span class="panel-index" id="endpoint-index">01 / 07</span>
+          </div>
+          <form class="request-body" id="request-form">
+            <div class="selected-route">
+              <div class="selected-title" id="endpoint-title"></div>
+              <div class="selected-path" id="endpoint-path"></div>
+            </div>
+            <div class="field-grid" id="fields"></div>
+            <div class="actions">
+              <button class="send-button" id="send-button" type="submit"><span aria-hidden="true">&#8594;</span> Send request</button>
+              <button class="reset-button" id="reset-button" type="button">Reset</button>
+            </div>
+          </form>
+        </section>
+
+        <section class="panel response-panel" aria-labelledby="response-heading">
+          <div class="panel-heading response-heading">
+            <h2 id="response-heading">Response</h2>
+            <div class="response-tools">
+              <div class="response-meta"><span class="status" id="status">READY</span><span id="duration">-- ms</span></div>
+              <button class="copy-button" id="copy-button" type="button" title="Copy response" aria-label="Copy response">&#10697;</button>
+            </div>
+          </div>
+          <div class="request-url" id="request-url">No request sent</div>
+          <div class="response-content" id="response-content" aria-live="polite">
+            <div class="empty-state">
+              <div class="empty-mark" aria-hidden="true">{ }</div>
+              <strong>Response will appear here</strong>
+              <span>Select an endpoint and send a request.</span>
+            </div>
+          </div>
+          <div class="response-summary" id="response-summary">Waiting for request</div>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    const endpoints = [
+      { id: "health", name: "Health check", path: "/health", description: "Check API and MongoDB connectivity.", fields: [] },
+      { id: "news", name: "Latest news", path: "/news", description: "Fetch the latest stored articles.", fields: [{ name: "limit", label: "Result limit", type: "number", value: "10", min: 1, max: 100 }] },
+      { id: "search", name: "Search news", path: "/news/search", description: "Search title, description, and category.", fields: [{ name: "keyword", label: "Keyword", type: "text", value: "", placeholder: "e.g. artificial intelligence", required: true }, { name: "limit", label: "Result limit", type: "number", value: "10", min: 1, max: 100 }] },
+      { id: "category", name: "News by category", path: "/news/category/{category}", description: "Filter articles by a supported category.", fields: [{ name: "category", label: "Category", type: "text", value: "AI", placeholder: "e.g. AI", required: true }] },
+      { id: "article", name: "Article by ID", path: "/news/{id}", description: "Fetch one article by its MongoDB ObjectId.", fields: [{ name: "id", label: "Article ID", type: "text", value: "", placeholder: "24-character MongoDB ObjectId", required: true }] },
+      { id: "briefings", name: "Briefing history", path: "/briefings", description: "Fetch saved daily briefings.", fields: [{ name: "limit", label: "Result limit", type: "number", value: "10", min: 1, max: 100 }] },
+      { id: "briefing", name: "Briefing by date", path: "/briefings/{date}", description: "Fetch a briefing for a specific date.", fields: [{ name: "date", label: "Briefing date", type: "date", value: new Date().toISOString().slice(0, 10), required: true }] }
+    ];
+
+    const routeList = document.querySelector("#route-list");
+    const fields = document.querySelector("#fields");
+    const form = document.querySelector("#request-form");
+    const responseContent = document.querySelector("#response-content");
+    const scheduleSelect = document.querySelector("#schedule-select");
+    const scheduleState = document.querySelector("#schedule-state");
+    const scheduleStateText = document.querySelector("#schedule-state-text");
+    const scheduleDetail = document.querySelector("#schedule-detail");
+    const newsList = document.querySelector("#news-list");
+    let selectedId = "health";
+    let lastResponse = "";
+    let lastFinishedAt = null;
+    let scheduleRequestInProgress = false;
+
+    document.querySelector("#origin").textContent = window.location.origin;
+
+    function renderNavigation() {
+      routeList.replaceChildren(...endpoints.map((endpoint, index) => {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "route-button";
+        button.dataset.endpoint = endpoint.id;
+        button.setAttribute("aria-current", endpoint.id === selectedId ? "page" : "false");
+        button.innerHTML = `<span class="method">GET</span><span class="route-name">${endpoint.name}</span>`;
+        button.addEventListener("click", () => selectEndpoint(endpoint.id));
+        return button;
+      }));
+    }
+
+    function renderFields(endpoint) {
+      fields.replaceChildren(...endpoint.fields.map((field) => {
+        const wrapper = document.createElement("div");
+        wrapper.className = "field";
+        const label = document.createElement("label");
+        label.htmlFor = `field-${field.name}`;
+        label.textContent = field.label;
+        const input = document.createElement("input");
+        input.id = `field-${field.name}`;
+        input.name = field.name;
+        input.type = field.type;
+        input.value = field.value;
+        input.required = Boolean(field.required);
+        if (field.placeholder) input.placeholder = field.placeholder;
+        if (field.min !== undefined) input.min = field.min;
+        if (field.max !== undefined) input.max = field.max;
+        wrapper.append(label, input);
+        return wrapper;
+      }));
+    }
+
+    function selectEndpoint(id) {
+      selectedId = id;
+      const endpoint = endpoints.find((item) => item.id === id);
+      renderNavigation();
+      renderFields(endpoint);
+      document.querySelector("#endpoint-title").textContent = endpoint.description;
+      document.querySelector("#endpoint-path").textContent = `GET ${endpoint.path}`;
+      document.querySelector("#endpoint-index").textContent = `${String(endpoints.indexOf(endpoint) + 1).padStart(2, "0")} / ${String(endpoints.length).padStart(2, "0")}`;
+    }
+
+    function buildUrl(endpoint, values) {
+      let path = endpoint.path;
+      if (endpoint.id === "category") path = `/news/category/${encodeURIComponent(values.category.trim())}`;
+      if (endpoint.id === "article") path = `/news/${encodeURIComponent(values.id.trim())}`;
+      if (endpoint.id === "briefing") path = `/briefings/${encodeURIComponent(values.date)}`;
+      const query = new URLSearchParams();
+      if (endpoint.id === "news" || endpoint.id === "briefings") query.set("limit", values.limit);
+      if (endpoint.id === "search") {
+        query.set("keyword", values.keyword.trim());
+        query.set("limit", values.limit);
+      }
+      return query.size ? `${path}?${query}` : path;
+    }
+
+    function showResponse(text) {
+      lastResponse = text;
+      const pre = document.createElement("pre");
+      pre.textContent = text;
+      responseContent.replaceChildren(pre);
+    }
+
+    function formatTimestamp(value) {
+      if (!value) return "Not run yet";
+      const timestamp = new Date(value);
+      return Number.isNaN(timestamp.getTime()) ? "Unknown" : timestamp.toLocaleString();
+    }
+
+    function setScheduleState(state, message, detail) {
+      scheduleState.className = `schedule-state${state === "running" ? " running" : state === "error" ? " error" : ""}`;
+      scheduleStateText.textContent = message;
+      scheduleDetail.textContent = detail;
+    }
+
+    function renderNews(articles) {
+      if (!articles.length) {
+        newsList.innerHTML = '<div class="feed-message">No saved stories yet. The feed will populate after the first successful scheduled fetch.</div>';
+        return;
+      }
+
+      const items = articles.map((article) => {
+        const item = document.createElement("article");
+        item.className = "news-item";
+        const category = document.createElement("div");
+        category.className = "news-category";
+        category.textContent = article.category || "Technology";
+        const content = document.createElement("div");
+        const title = document.createElement("h3");
+        title.className = "news-title";
+        const link = document.createElement("a");
+        link.href = article.url;
+        link.target = "_blank";
+        link.rel = "noopener noreferrer";
+        link.textContent = article.title || "Untitled story";
+        title.append(link);
+        content.append(title);
+        if (article.description) {
+          const description = document.createElement("p");
+          description.className = "news-description";
+          description.textContent = article.description;
+          content.append(description);
+        }
+        const meta = document.createElement("div");
+        meta.className = "news-meta";
+        const source = document.createElement("span");
+        source.textContent = article.source || "Unknown source";
+        const published = document.createElement("span");
+        published.textContent = article.published_at ? formatTimestamp(article.published_at) : "Publication date unavailable";
+        meta.append(source, published);
+        content.append(meta);
+        item.append(category, content);
+        return item;
+      });
+      newsList.replaceChildren(...items);
+    }
+
+    async function loadNews() {
+      const response = await fetch("/news?limit=30", { cache: "no-store" });
+      if (!response.ok) throw new Error(`News request failed (${response.status})`);
+      const result = await response.json();
+      renderNews(result.news || []);
+      document.querySelector("#news-updated").textContent = `Showing ${result.count || 0} saved stories`;
+    }
+
+    function renderJobStatus(schedule) {
+      const job = schedule.last_job || {};
+      const lastFinished = job.finished_at;
+      if (job.status === "running") {
+        setScheduleState("running", "Fetching news now", `Next run ${formatTimestamp(schedule.next_run_at)}. The feed updates when this run finishes.`);
+        return;
+      }
+      if (job.status === "failed") {
+        setScheduleState("error", "Last scheduled fetch failed", `${job.error || "Check the server log."} Next run ${formatTimestamp(schedule.next_run_at)}.`);
+        return;
+      }
+      if (job.status === "success") {
+        setScheduleState("ready", `Schedule active: ${schedule.label}`, `Last fetch ${formatTimestamp(lastFinished)}; ${job.inserted || 0} new, ${job.duplicates || 0} already saved. Next run ${formatTimestamp(schedule.next_run_at)}.`);
+        return;
+      }
+      setScheduleState("ready", `Schedule active: ${schedule.label}`, `Next run ${formatTimestamp(schedule.next_run_at)}. News will refresh automatically after each fetch.`);
+    }
+
+    async function loadSchedule() {
+      const response = await fetch("/schedule", { cache: "no-store" });
+      if (!response.ok) throw new Error(`Schedule request failed (${response.status})`);
+      const schedule = await response.json();
+      scheduleSelect.value = schedule.interval;
+      renderJobStatus(schedule);
+
+      const finishedAt = schedule.last_job?.finished_at;
+      if (finishedAt && finishedAt !== lastFinishedAt) {
+        lastFinishedAt = finishedAt;
+        if (schedule.last_job.status === "success") {
+          await loadNews();
+        }
+      }
+    }
+
+    async function saveSchedule() {
+      if (scheduleRequestInProgress) return;
+      scheduleRequestInProgress = true;
+      scheduleSelect.disabled = true;
+      setScheduleState("running", "Saving schedule", "The server will start a news fetch immediately.");
+      try {
+        const response = await fetch("/schedule", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ interval: scheduleSelect.value })
+        });
+        const result = await response.json();
+        if (!response.ok) throw new Error(result.detail || `Schedule update failed (${response.status})`);
+        scheduleSelect.value = result.interval;
+        renderJobStatus(result);
+      } catch (error) {
+        setScheduleState("error", "Could not update schedule", error.message);
+        await loadSchedule().catch(() => {});
+      } finally {
+        scheduleRequestInProgress = false;
+        scheduleSelect.disabled = false;
+      }
+    }
+
+    scheduleSelect.addEventListener("change", saveSchedule);
+
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      if (!form.reportValidity()) return;
+      const endpoint = endpoints.find((item) => item.id === selectedId);
+      const values = Object.fromEntries(new FormData(form).entries());
+      const path = buildUrl(endpoint, values);
+      const url = new URL(path, window.location.origin);
+      const button = document.querySelector("#send-button");
+      const status = document.querySelector("#status");
+      const startedAt = performance.now();
+      button.disabled = true;
+      button.innerHTML = '<span aria-hidden="true">&#8635;</span> Sending';
+      status.className = "status warn";
+      status.textContent = "WAITING";
+      document.querySelector("#request-url").textContent = `GET ${url.href}`;
+      document.querySelector("#response-summary").textContent = "Request in progress";
+
+      try {
+        const response = await fetch(url);
+        const text = await response.text();
+        let body;
+        try { body = JSON.stringify(JSON.parse(text), null, 2); }
+        catch { body = text || "(empty response)"; }
+        showResponse(body);
+        status.className = `status ${response.ok ? "good" : "bad"}`;
+        status.textContent = `${response.status} ${response.statusText || ""}`.trim();
+        document.querySelector("#response-summary").textContent = response.ok
+          ? "Request completed successfully"
+          : "Request returned an error; inspect the response details";
+      } catch (error) {
+        showResponse(JSON.stringify({ error: error.message }, null, 2));
+        status.className = "status bad";
+        status.textContent = "NETWORK ERROR";
+        document.querySelector("#response-summary").textContent = "Could not reach the API. Confirm the server is running.";
+      } finally {
+        document.querySelector("#duration").textContent = `${Math.round(performance.now() - startedAt)} ms`;
+        button.disabled = false;
+        button.innerHTML = '<span aria-hidden="true">&#8594;</span> Send request';
+      }
+    });
+
+    document.querySelector("#reset-button").addEventListener("click", () => selectEndpoint(selectedId));
+    document.querySelector("#copy-button").addEventListener("click", async (event) => {
+      if (!lastResponse) return;
+      await navigator.clipboard.writeText(lastResponse);
+      const button = event.currentTarget;
+      button.title = "Copied";
+      setTimeout(() => { button.title = "Copy response"; }, 1200);
+    });
+
+    selectEndpoint(selectedId);
+    loadNews().catch((error) => {
+      newsList.textContent = error.message;
+      document.querySelector("#news-updated").textContent = "Unavailable";
+    });
+    loadSchedule().catch((error) => setScheduleState("error", "Schedule unavailable", error.message));
+    window.setInterval(() => {
+      if (!document.hidden && !scheduleRequestInProgress) {
+        loadSchedule().catch((error) => setScheduleState("error", "Schedule unavailable", error.message));
+      }
+    }, 4000);
+  </script>
+</body>
+</html>
